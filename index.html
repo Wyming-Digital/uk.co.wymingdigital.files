@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WymingRepo</title>
+
+<link rel="icon" type="image/png" href="https://wymingdigital.co.uk/assets/favicon.png">
+
+<style>
+body {
+  font-family: monospace;
+  background: #fff;
+  color: #000;
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  color: #00f;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+pre {
+  line-height: 1.4;
+  padding: 16px;
+}
+
+/* Top bar */
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #94C3D2;
+}
+
+#topbar img {
+  height: 32px;
+}
+
+/* Home button */
+#home-btn {
+  background: transparent;
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 6px 14px;
+  font-family: monospace;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#home-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Title spacing */
+h1 {
+  padding: 0 16px;
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <a href="https://wymingdigital.co.uk">
+    <img src="https://wymingdigital.co.uk/assets/headerlogo.png" alt="Wyming Digital Logo">
+  </a>
+
+  <a href="https://wymingdigital.co.uk">
+    <button id="home-btn">Home</button>
+  </a>
+</div>
+
+<h1 id="title">Index of /projects</h1>
+<pre id="listing">Loading…</pre>
+
+<script>
+const ORG = "Wyming-Digital";
+const API = "https://api.github.com";
+
+const listing = document.getElementById("listing");
+const title = document.getElementById("title");
+
+const params = new URLSearchParams(window.location.search);
+const repo = params.get("repo");
+const section = params.get("section");
+
+function link(href, text) {
+  return `<a href="${href}">${text}</a>`;
+}
+
+async function loadOrg() {
+  title.textContent = "Index of /projects";
+  const res = await fetch(`${API}/orgs/${ORG}/repos?per_page=100`);
+  const repos = await res.json();
+
+  let out = "";
+  repos
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(r => {
+      out += `${link(`?repo=${r.name}`, r.name + "/")}\n`;
+    });
+
+  listing.innerHTML = out;
+}
+
+async function loadRepo(repo) {
+  title.textContent = `Index of /projects/${repo}/`;
+
+  listing.innerHTML = `
+${link("?", "../")}
+${link(`?repo=${repo}&section=source`, "source/")}
+${link(`?repo=${repo}&section=releases`, "releases/")}
+${link(`?repo=${repo}&section=code`, "code/")}
+`;
+}
+
+async function loadSource(repo) {
+  title.textContent = `Index of /projects/${repo}/source/`;
+
+  const repoInfo = await fetch(`${API}/repos/${ORG}/${repo}`).then(r => r.json());
+  const branch = repoInfo.default_branch;
+
+  listing.innerHTML = `
+${link(`?repo=${repo}`, "../")}
+${link(`https://github.com/${ORG}/${repo}/archive/refs/heads/${branch}.zip`, `${branch}.zip`)}
+${link(`https://github.com/${ORG}/${repo}/archive/refs/heads/${branch}.tar.gz`, `${branch}.tar.gz`)}
+`;
+}
+
+async function loadReleases(repo) {
+  title.textContent = `Index of /projects/${repo}/releases/`;
+
+  const releases = await fetch(`${API}/repos/${ORG}/${repo}/releases`).then(r => r.json());
+
+  let out = `${link(`?repo=${repo}`, "../")}\n`;
+
+  releases.forEach(rel => {
+    out += `${link(`?repo=${repo}&section=releases&tag=${rel.tag_name}`, rel.tag_name + "/")}  ${rel.published_at.slice(0,10)}\n`;
+  });
+
+  listing.innerHTML = out || "No releases";
+}
+
+async function loadRelease(repo, tag) {
+  title.textContent = `Index of /projects/${repo}/releases/${tag}/`;
+
+  const releases = await fetch(`${API}/repos/${ORG}/${repo}/releases`).then(r => r.json());
+  const rel = releases.find(r => r.tag_name === tag);
+
+  let out = `${link(`?repo=${repo}&section=releases`, "../")}\n`;
+
+  if (rel && rel.assets.length) {
+    rel.assets.forEach(a => {
+      out += `${link(a.browser_download_url, a.name)}\n`;
+    });
+  } else {
+    out += "No assets\n";
+  }
+
+  listing.innerHTML = out;
+}
+
+async function loadCode(repo) {
+  title.textContent = `Index of /projects/${repo}/code/`;
+
+  listing.innerHTML = `
+${link(`?repo=${repo}`, "../")}
+${link(`https://github.com/${ORG}/${repo}`, "Browse repository")}
+${link(`https://github.com/${ORG}/${repo}/blob/main/README.md`, "README")}
+`;
+}
+
+(async () => {
+  if (!repo) return loadOrg();
+  if (!section) return loadRepo(repo);
+  if (section === "source") return loadSource(repo);
+  if (section === "releases") {
+    const tag = params.get("tag");
+    return tag ? loadRelease(repo, tag) : loadReleases(repo);
+  }
+  if (section === "code") return loadCode(repo);
+})();
+</script>
+
+</body>
+</html>
