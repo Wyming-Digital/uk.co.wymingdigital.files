@@ -87,11 +87,14 @@ const title = document.getElementById("title");
 const params = new URLSearchParams(window.location.search);
 const repo = params.get("repo");
 const section = params.get("section");
+const path = params.get("path") || "";
 
+// Helper for links
 function link(href, text) {
   return `<a href="${href}">${text}</a>`;
 }
 
+// Load organization repos
 async function loadOrg() {
   title.textContent = "Index of /projects";
   const res = await fetch(`${API}/orgs/${ORG}/repos?per_page=100`);
@@ -107,6 +110,7 @@ async function loadOrg() {
   listing.innerHTML = out;
 }
 
+// Load repo main sections
 async function loadRepo(repo) {
   title.textContent = `Index of /projects/${repo}/`;
 
@@ -118,6 +122,7 @@ ${link(`?repo=${repo}&section=code`, "code/")}
 `;
 }
 
+// Load source downloads
 async function loadSource(repo) {
   title.textContent = `Index of /projects/${repo}/source/`;
 
@@ -131,6 +136,7 @@ ${link(`https://github.com/${ORG}/${repo}/archive/refs/heads/${branch}.tar.gz`, 
 `;
 }
 
+// Load releases
 async function loadReleases(repo) {
   title.textContent = `Index of /projects/${repo}/releases/`;
 
@@ -164,16 +170,30 @@ async function loadRelease(repo, tag) {
   listing.innerHTML = out;
 }
 
-async function loadCode(repo) {
-  title.textContent = `Index of /projects/${repo}/code/`;
+// --- NEW: Load code as full file browser ---
+async function loadCode(repo, path = "") {
+  title.textContent = `Index of /projects/${repo}/code/${path}`;
 
-  listing.innerHTML = `
-${link(`?repo=${repo}`, "../")}
-${link(`https://github.com/${ORG}/${repo}`, "Browse repository")}
-${link(`https://github.com/${ORG}/${repo}/blob/main/README.md`, "README")}
-`;
+  // fetch files/folders
+  const res = await fetch(`${API}/repos/${ORG}/${repo}/contents/${path}`);
+  const items = await res.json();
+
+  let out = `${link(`?repo=${repo}&section=code`, "../")}\n`;
+
+  items.sort((a,b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
+
+  items.forEach(item => {
+    if (item.type === "dir") {
+      out += `${link(`?repo=${repo}&section=code&path=${item.path}`, item.name + "/")}\n`;
+    } else {
+      out += `${link(item.html_url, item.name)}\n`;
+    }
+  });
+
+  listing.innerHTML = out;
 }
 
+// Main entry
 (async () => {
   if (!repo) return loadOrg();
   if (!section) return loadRepo(repo);
@@ -182,7 +202,7 @@ ${link(`https://github.com/${ORG}/${repo}/blob/main/README.md`, "README")}
     const tag = params.get("tag");
     return tag ? loadRelease(repo, tag) : loadReleases(repo);
   }
-  if (section === "code") return loadCode(repo);
+  if (section === "code") return loadCode(repo, path);
 })();
 </script>
 
