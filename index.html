@@ -48,22 +48,75 @@ pre {
 h1 {
   padding: 0 16px;
 }
+  /* Header */
+.site-header {
+    background: #7B9DD3;
+    color: white;
+    text-align: center;
+    padding: 50px 20px 30px;
+}
+
+.site-header h1 {
+    margin: 0;
+    font-size: 48px;
+    letter-spacing: 2px;
+}
+  /* Navigation */
+.main-nav {
+    background: #6d8ec6;
+}
+
+.main-nav ul {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    list-style: none;
+    padding: 10px;
+    margin: 0;
+}
+
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+}
+
+.main-nav a:hover {
+    background: rgba(255,255,255,0.15);
+}
+  /* Announcement */
+.announcement-bar {
+    background: #ffe84a;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 14px;
+}
 </style>
 </head>
 <body>
 
-<div id="topbar">
-  <a href="https://wymingdigital.co.uk">
-    <img src="headerlogo.png" alt="Wyming Digital Logo">
-  </a>
+<header class="site-header">
+    <h1>WYMING DIGITAL</h1>
+    <p class="tagline">CREATING QUALITY PRODUCTS</p>
+</header>
 
-  <a href="https://wymingdigital.co.uk">
-    <button id="home-btn">Home</button>
-  </a>
-</div>
+<nav class="main-nav">
+    <ul>
+        <li><a href="https://wymingdigital.co.uk/index.html">Home</a></li>
+        <li><a href="https://wymingdigital.co.uk/about.html">About</a></li>
+        <li><a href="https://wymingdigital.co.uk/products.html" aria-current="page">Products</a></li>
+        <li><a href="https://wymingdigital.co.uk/productlibary.html">Updates</a></li>
+        <li><a href="https://docs.wymingdigital.co.uk">Docs</a></li>
+        <li><a href="https://files.wymingdigital.co.uk">Files</a></li>
+    </ul>
+</nav>
 <h1 id="title">Index of /projects</h1>
 <pre id="listing">Loading…</pre>
-  
+  <div class="announcement-bar">
+    <strong>⚠ Important:</strong>
+    This site is not finished. This means that this version may have missing features or code errors.
+</div>
 <script>
 const ORG = "Wyming-Digital";
 const API = "https://api.github.com";
