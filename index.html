@@ -1,13 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Wyming Digital</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="./favicon.ico">
-    <link rel="stylesheet" href="style.css">
-</head>
+<meta charset="UTF-8">
+<title>File Portal - Wyming Digital</title>
+<link rel="icon" type="image/ico" href="favicon.ico">
+  
+<style>
+body {
+  font-family: monospace;
+  background: #fff;
+  color: #000;
+  margin: 0;
+}
+a {
+  text-decoration: none;
+  color: #00f;
+}
+a:hover {
+  text-decoration: underline;
+}
+pre {
+  line-height: 1.4;
+  padding: 16px;
+}
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #94C3D2;
+}
+#topbar img {
+  height: 32px;
+}
+#home-btn {
+  background: transparent;
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 6px 14px;
+  font-family: monospace;
+  font-size: 14px;
+  cursor: pointer;
+}
+#home-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+h1 {
+  padding: 0 16px;
+}
+  /* Header */
+.site-header {
+    background: #7B9DD3;
+    color: white;
+    text-align: center;
+    padding: 50px 20px 30px;
+}
 
+.site-header h1 {
+    margin: 0;
+    font-size: 48px;
+    letter-spacing: 2px;
+}
+  /* Navigation */
+.main-nav {
+    background: #6d8ec6;
+}
+
+.main-nav ul {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    list-style: none;
+    padding: 10px;
+    margin: 0;
+}
+
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+}
+
+.main-nav a:hover {
+    background: rgba(255,255,255,0.15);
+}
+  /* Announcement */
+.announcement-bar {
+    background: #ffe84a;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 14px;
+}
+</style>
+</head>
 <body>
 
 <header class="site-header">
@@ -17,114 +103,141 @@
 
 <nav class="main-nav">
     <ul>
-        <li><a href="./index.html">Home</a></li>
-        <li><a href="./about.html">About</a></li>
-        <li><a href="./products.html">Products</a></li>
-        <li><a href="./productlibary.html">Updates</a></li>
+        <li><a href="https://wymingdigital.co.uk/index.html">Home</a></li>
+        <li><a href="https://wymingdigital.co.uk/about.html">About</a></li>
+        <li><a href="https://wymingdigital.co.uk/products.html" aria-current="page">Products</a></li>
+        <li><a href="https://wymingdigital.co.uk/productlibary.html">Updates</a></li>
         <li><a href="https://docs.wymingdigital.co.uk">Docs</a></li>
         <li><a href="https://files.wymingdigital.co.uk">Files</a></li>
     </ul>
 </nav>
-
-<div class="announcement-bar">
+   <div class="announcement-bar">
     <strong>⚠ Important:</strong>
-    This site and associated services are still in development and may behave unexpectedly.
+    This site is not finished. This means that this version may have missing features or code errors.
 </div>
+<h1 id="title">Index of /projects</h1>
+<pre id="listing">Loading…</pre>
+ 
+<script>
+const ORG = "Wyming-Digital";
+const API = "https://api.github.com";
 
-<main class="container">
+const listing = document.getElementById("listing");
+const title = document.getElementById("title");
 
-    <!-- Hero -->
-    <section class="hero">
-        <h2>Building reliable, lightweight digital tools that just work.</h2>
-        <a href="./about.html" class="cta-link">Find out more →</a>
-    </section>
+const params = new URLSearchParams(window.location.search);
+const repo = params.get("repo");
+const section = params.get("section");
+const path = params.get("path") || "";
 
- <section class="products">
+function link(href, text) {
+  return `<a href="${href}">${text}</a>`;
+}
 
-    <h3>Featured Products</h3>
+  async function loadOrg() {
+  title.textContent = "Index of /projects";
+  const res = await fetch(`${API}/orgs/${ORG}/repos?per_page=100`);
+  const repos = await res.json();
 
-    <div class="product-card">
+  let out = "";
+  repos
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(r => {
+      out += `${link(`?repo=${r.name}`, r.name + "/")}\n`;
+    });
 
-        <div class="repo-badge">
-            <span>github.com</span> / <strong>wymingdigital/example-tool</strong>
-        </div>
+  listing.innerHTML = out;
+}
 
-        <div class="product-info">
-            <span class="product-tag">NEW RELEASE</span>
-            <h4>Example Tool</h4>
-            <p>
-                A lightweight utility designed to simplify workflows and
-                provide reliable results without unnecessary complexity.
-            </p>
-        </div>
+async function loadRepo(repo) {
+  title.textContent = `Index of /projects/${repo}/`;
 
-    </div>
+  listing.innerHTML = `
+${link("?", "../")}
+${link(`?repo=${repo}&section=source`, "source/")}
+${link(`?repo=${repo}&section=releases`, "releases/")}
+${link(`?repo=${repo}&section=code`, "code/")}
+`;
+}
 
-    <div class="product-card">
+async function loadSource(repo) {
+  title.textContent = `Index of /projects/${repo}/source/`;
 
-        <div class="repo-badge">
-            <span>github.com</span> / <strong>wymingdigital/another-project</strong>
-        </div>
+  const repoInfo = await fetch(`${API}/repos/${ORG}/${repo}`).then(r => r.json());
+  const branch = repoInfo.default_branch;
 
-        <div class="product-info">
-            <span class="product-tag">UPDATE</span>
-            <h4>Another Project</h4>
-            <p>
-                An actively developed project focusing on stability,
-                documentation, and long-term usability.
-            </p>
-        </div>
+  listing.innerHTML = `
+${link(`?repo=${repo}`, "../")}
+${link(`https://github.com/${ORG}/${repo}/archive/refs/heads/${branch}.zip`, `${branch}.zip`)}
+${link(`https://github.com/${ORG}/${repo}/archive/refs/heads/${branch}.tar.gz`, `${branch}.tar.gz`)}
+`;
+}
 
-    </div>
+async function loadReleases(repo) {
+  title.textContent = `Index of /projects/${repo}/releases/`;
 
-</section>
+  const releases = await fetch(`${API}/repos/${ORG}/${repo}/releases`).then(r => r.json());
 
+  let out = `${link(`?repo=${repo}`, "../")}\n`;
 
-</main>
+  releases.forEach(rel => {
+    out += `${link(`?repo=${repo}&section=releases&tag=${rel.tag_name}`, rel.tag_name + "/")}  ${rel.published_at.slice(0,10)}\n`;
+  });
 
-<footer class="site-footer">
-    <div class="footer-grid">
+  listing.innerHTML = out || "No releases";
+}
 
-        <div>
-            <h4>Notice</h4>
-            <p>
-                This site is currently in beta.  
-                Report issues via GitHub or email
-                <a href="mailto:contact@wymingdigital.co.uk">
-                    contact@wymingdigital.co.uk
-                </a>.
-            </p>
-        </div>
+async function loadRelease(repo, tag) {
+  title.textContent = `Index of /projects/${repo}/releases/${tag}/`;
 
-        <div>
-            <h4>Resources</h4>
-            <ul>
-                <li><a href="https://docs.wymingdigital.co.uk">Documentation</a></li>
-                <li><a href="https://files.wymingdigital.co.uk">Downloads</a></li>
-                <li><a href="https://github.com/Wyming-Digital">GitHub</a></li>
-            </ul>
-        </div>
+  const releases = await fetch(`${API}/repos/${ORG}/${repo}/releases`).then(r => r.json());
+  const rel = releases.find(r => r.tag_name === tag);
 
-        <div>
-            <h4>Community</h4>
-            <ul>
-                <li><a href="#">Updates</a></li>
-                <li><a href="https://github.com/Wyming-Digital">Changelog</a></li>
-                <li><a href="./roadmap.html">Roadmap</a></li>
-            </ul>
-        </div>
+  let out = `${link(`?repo=${repo}&section=releases`, "../")}\n`;
 
-        <div>
-            <h4>About</h4>
-            <p>We build independent, free digital tools built with reliability in mind.</p>
-        </div>
+  if (rel && rel.assets.length) {
+    rel.assets.forEach(a => {
+      out += `${link(a.browser_download_url, a.name)}\n`;
+    });
+  } else {
+    out += "No assets\n";
+  }
 
-    </div>
+  listing.innerHTML = out;
+}
 
-    <div class="footer-bottom">
-        © 2026 Wyming Digital
-    </div>
-</footer>
+async function loadCode(repo, path = "") {
+  title.textContent = `Index of /projects/${repo}/code/${path}`;
+
+  const res = await fetch(`${API}/repos/${ORG}/${repo}/contents/${path}`);
+  const items = await res.json();
+
+  let out = `${link(`?repo=${repo}&section=code`, "../")}\n`;
+
+  items.sort((a,b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
+
+  items.forEach(item => {
+    if (item.type === "dir") {
+      out += `${link(`?repo=${repo}&section=code&path=${item.path}`, item.name + "/")}\n`;
+    } else {
+      out += `${link(item.html_url, item.name)}\n`;
+    }
+  });
+
+  listing.innerHTML = out;
+}
+
+(async () => {
+  if (!repo) return loadOrg();
+  if (!section) return loadRepo(repo);
+  if (section === "source") return loadSource(repo);
+  if (section === "releases") {
+    const tag = params.get("tag");
+    return tag ? loadRelease(repo, tag) : loadReleases(repo);
+  }
+  if (section === "code") return loadCode(repo, path);
+})();
+</script>
 
 </body>
 </html>
